@@ -13,6 +13,31 @@ import { ApplicationResult } from '../../../types/insurance'
 
 const CONTACT_NUMBER = '0800 123 4567'
 
+const DEV_PREFILL_DATA: LifeInsuranceSchema = {
+  firstName: 'Jane',
+  lastName: 'Smith',
+  email: 'jane.smith@example.com',
+  dateOfBirth: '1985-06-15',
+  nationalInsuranceNumber: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  ukPermanentResident: true,
+  coverType: 'term',
+  coverAmount: 250000,
+  coverTermYears: 25,
+  reasonForCover: 'To protect my family mortgage and living expenses in the event of my death.',
+  hasPreExistingConditions: false,
+  hasMedication: false,
+  hasSurgeries: false,
+  hasFamilyHistory: false,
+  smokingStatus: 'never',
+  usesVapingOrNicotine: false,
+  alcoholUnitsPerWeek: 6,
+  usesRecreationalDrugs: false,
+  jobTitle: 'Software Engineer',
+  industry: 'Technology',
+  hasHazardousHobbies: false,
+  hasExistingCover: false
+}
+
 function SubmittedSummary({ data }: { data: LifeInsuranceSchema }) {
   const coverTypeLabels: Record<string, string> = {
     term: 'Term Life',
@@ -114,6 +139,7 @@ export default function LifeInsuranceForm() {
     handleSubmit,
     watch,
     control,
+    reset,
     formState: { errors }
   } = useForm<LifeInsuranceSchema>({
     resolver: zodResolver(lifeInsuranceSchema),
@@ -202,39 +228,56 @@ export default function LifeInsuranceForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onConfirmedSubmit)} noValidate className="space-y-6">
-      <PersonalDetails register={register} errors={errors} />
-      <CoverDetails register={register} errors={errors} watch={watch} />
-      <MedicalHistory register={register} errors={errors} watch={watch} control={control} />
-      <LifestyleDetails register={register} errors={errors} watch={watch} control={control} />
-      <OccupationAndHobbies register={register} errors={errors} watch={watch} control={control} />
-      <ExistingCover register={register} errors={errors} watch={watch} control={control} />
-
-      {submitError && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <p className="text-red-600 text-sm">{submitError}</p>
+    <div className="space-y-6">
+      {/* DEV ONLY — remove before production */}
+      <div className="border-2 border-dashed border-orange-400 bg-orange-50 rounded-lg p-4 flex items-center justify-between">
+        <div>
+          <p className="text-orange-700 font-semibold text-sm">⚠ DEV ONLY — Remove before production</p>
+          <p className="text-orange-600 text-xs mt-0.5">Prefills the form with valid dummy data for testing.</p>
         </div>
-      )}
-
-      {awaitingConfirmation && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-          <p className="text-yellow-800 text-sm font-medium">
-            Please ensure all the information you have provided is correct before confirming your
-            submission.
-          </p>
-        </div>
-      )}
-
-      <div className="flex justify-end pb-8">
         <button
-          type={awaitingConfirmation ? 'submit' : 'button'}
-          onClick={awaitingConfirmation ? undefined : handleSubmit(onFirstSubmit)}
-          disabled={isSubmitting}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+          type="button"
+          onClick={() => reset(DEV_PREFILL_DATA)}
+          className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
         >
-          {isSubmitting ? 'Submitting...' : awaitingConfirmation ? 'Confirm & Submit' : 'Submit Application'}
+          Prefill Form
         </button>
       </div>
-    </form>
+
+      <form onSubmit={handleSubmit(onConfirmedSubmit)} noValidate className="space-y-6">
+        <PersonalDetails register={register} errors={errors} />
+        <CoverDetails register={register} errors={errors} watch={watch} />
+        <MedicalHistory register={register} errors={errors} watch={watch} control={control} />
+        <LifestyleDetails register={register} errors={errors} watch={watch} control={control} />
+        <OccupationAndHobbies register={register} errors={errors} watch={watch} control={control} />
+        <ExistingCover register={register} errors={errors} watch={watch} control={control} />
+
+        {submitError && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <p className="text-red-600 text-sm">{submitError}</p>
+          </div>
+        )}
+
+        {awaitingConfirmation && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+            <p className="text-yellow-800 text-sm font-medium">
+              Please ensure all the information you have provided is correct before confirming your
+              submission.
+            </p>
+          </div>
+        )}
+
+        <div className="flex justify-end pb-8">
+          <button
+            type={awaitingConfirmation ? 'submit' : 'button'}
+            onClick={awaitingConfirmation ? undefined : handleSubmit(onFirstSubmit)}
+            disabled={isSubmitting}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+          >
+            {isSubmitting ? 'Submitting...' : awaitingConfirmation ? 'Confirm & Submit' : 'Submit Application'}
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }
