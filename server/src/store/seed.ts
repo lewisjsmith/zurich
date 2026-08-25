@@ -74,6 +74,47 @@ const seedApplications: StoredApplication[] = [
     }
   },
   {
+    id: '44444444-4444-4444-4444-444444444444',
+    policyType: 'life',
+    submittedAt: '2024-01-18T11:45:00.000Z',
+    decision: 'REFER',
+    reasons: [
+      'LIF-05: Medical history disclosed. Refer for approved follow-up questions and medical evidence process.',
+      'LIF-06: Alcohol consumption of 32 units per week exceeds standard threshold. Refer for review.',
+      'LIF-07: Hazardous hobby disclosed. Confirm frequency, safety controls, and whether exclusion, loading, or specialist product applies.'
+    ],
+    data: {
+      firstName: 'Margaret',
+      lastName: 'Clarke',
+      email: 'margaret.clarke@example.com',
+      dateOfBirth: '1972-11-04',
+      nationalInsuranceNumber: 'd4e5f6a7-b8c9-0123-defa-234567890123',
+      ukPermanentResident: true,
+      coverType: 'decreasing',
+      coverAmount: 320000,
+      coverTermYears: 18,
+      linkedLiabilityDescription: 'Repayment mortgage on primary residence, outstanding balance £310,000, with Nationwide Building Society.',
+      reasonForCover: 'To ensure my mortgage is covered and my two children are financially protected if I were to pass away before the term ends.',
+      hasPreExistingConditions: true,
+      preExistingConditionsDetails: 'Hypothyroidism diagnosed in 2015, currently well managed. Also experienced a bout of depression in 2020, received CBT therapy, fully recovered with no ongoing treatment.',
+      hasMedication: true,
+      medicationDetails: 'Levothyroxine 75mcg daily for hypothyroidism.',
+      hasSurgeries: true,
+      surgeriesDetails: 'Appendectomy in 2019, routine procedure, full recovery with no complications.',
+      hasFamilyHistory: true,
+      familyHistoryDetails: 'Mother diagnosed with breast cancer at age 61, currently in remission. Maternal aunt also had breast cancer at age 55.',
+      smokingStatus: 'ex',
+      usesVapingOrNicotine: false,
+      alcoholUnitsPerWeek: 32,
+      usesRecreationalDrugs: false,
+      jobTitle: 'Secondary School Teacher',
+      industry: 'Education',
+      hasHazardousHobbies: true,
+      hazardousHobbiesDetails: 'Recreational scuba diving, approximately once a month. PADI Open Water certified, dives to a maximum depth of 18 metres, always dives with a registered club.',
+      hasExistingCover: false
+    }
+  },
+  {
     id: '33333333-3333-3333-3333-333333333333',
     policyType: 'life',
     submittedAt: '2024-01-17T09:15:00.000Z',
