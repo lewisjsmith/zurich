@@ -46,6 +46,31 @@ router.post('/', (req: Request, res: Response) => {
   })
 })
 
+router.get('/:id/status', (req: Request, res: Response) => {
+  const application = applicationStore.findById(req.params.id)
+  if (!application) {
+    res.status(404).json({ error: 'Application not found.' })
+    return
+  }
+
+  const decisionLabels: Record<QualificationDecision, string> = {
+    QUALIFY: 'Approved',
+    REFER: 'Referred for Review',
+    DECLINE: 'Declined'
+  }
+
+  res.json({
+    applicationId: application.id,
+    applicant: `${application.data.firstName} ${application.data.lastName}`,
+    submittedAt: application.submittedAt,
+    policyType: application.policyType,
+    decision: application.decision,
+    decisionLabel: decisionLabels[application.decision],
+    ...(application.rate !== undefined && { rateLoading: `${application.rate}%` }),
+    reasons: application.reasons
+  })
+})
+
 router.get('/:id', (req: Request, res: Response) => {
   const application = applicationStore.findById(req.params.id)
   if (!application) {
