@@ -98,7 +98,12 @@ export default function AllApplicationsPanel() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {applications.map((application) => (
-              <tr key={application.id} className="hover:bg-gray-50">
+              <tr
+                key={application.id}
+                onClick={() => { window.location.href = `/status/${application.id}` }}
+                className="hover:bg-blue-50 cursor-pointer transition-colors"
+                title={`View status for ${application.data.firstName} ${application.data.lastName}`}
+              >
                 <td className="px-4 py-3">
                   <p className="font-medium text-gray-800">
                     {application.data.firstName} {application.data.lastName}
