@@ -53,6 +53,7 @@ export interface StoredApplication {
   submittedAt: string
   decision: QualificationDecision
   reasons: string[]
+  rate?: number
   data: LifeInsuranceApplication
 }
 

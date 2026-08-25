@@ -10,6 +10,16 @@ export interface ApplicationResult {
   applicationId: string
 }
 
+export interface StoredApplication {
+  id: string
+  policyType: 'life'
+  submittedAt: string
+  decision: QualificationDecision
+  reasons: string[]
+  rate?: number
+  data: LifeInsuranceFormData
+}
+
 export interface LifeInsuranceFormData {
   // Personal Details
   firstName: string

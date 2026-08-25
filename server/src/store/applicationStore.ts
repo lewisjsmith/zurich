@@ -12,12 +12,24 @@ export const applicationStore = {
     applications.set(application.id, application)
   },
 
+  update(id: string, changes: Partial<StoredApplication>): StoredApplication | undefined {
+    const existing = applications.get(id)
+    if (!existing) return undefined
+    const updated = { ...existing, ...changes }
+    applications.set(id, updated)
+    return updated
+  },
+
   findById(id: string): StoredApplication | undefined {
     return applications.get(id)
   },
 
   findAll(): StoredApplication[] {
     return Array.from(applications.values())
+  },
+
+  findByDecision(decision: StoredApplication['decision']): StoredApplication[] {
+    return Array.from(applications.values()).filter((a) => a.decision === decision)
   },
 
   count(): number {
