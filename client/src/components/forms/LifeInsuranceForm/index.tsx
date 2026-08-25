@@ -22,6 +22,7 @@ export default function LifeInsuranceForm() {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors }
   } = useForm<LifeInsuranceSchema>({
     resolver: zodResolver(lifeInsuranceSchema),
@@ -98,10 +99,10 @@ export default function LifeInsuranceForm() {
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
       <PersonalDetails register={register} errors={errors} />
       <CoverDetails register={register} errors={errors} watch={watch} />
-      <MedicalHistory register={register} errors={errors} watch={watch} />
-      <LifestyleDetails register={register} errors={errors} watch={watch} />
-      <OccupationAndHobbies register={register} errors={errors} watch={watch} />
-      <ExistingCover register={register} errors={errors} watch={watch} />
+      <MedicalHistory register={register} errors={errors} watch={watch} control={control} />
+      <LifestyleDetails register={register} errors={errors} watch={watch} control={control} />
+      <OccupationAndHobbies register={register} errors={errors} watch={watch} control={control} />
+      <ExistingCover register={register} errors={errors} watch={watch} control={control} />
 
       {submitError && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4">

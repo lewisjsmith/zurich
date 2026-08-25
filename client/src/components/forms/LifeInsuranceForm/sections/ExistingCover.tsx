@@ -1,13 +1,54 @@
-import { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form'
+import { UseFormRegister, FieldErrors, UseFormWatch, Controller, Control } from 'react-hook-form'
 import { LifeInsuranceSchema } from '../schema'
 
 interface Props {
   register: UseFormRegister<LifeInsuranceSchema>
   errors: FieldErrors<LifeInsuranceSchema>
   watch: UseFormWatch<LifeInsuranceSchema>
+  control: Control<LifeInsuranceSchema>
 }
 
-export default function ExistingCover({ register, errors, watch }: Props) {
+interface BooleanRadioProps {
+  name: keyof LifeInsuranceSchema
+  control: Control<LifeInsuranceSchema>
+  error?: string
+}
+
+function BooleanRadioGroup({ name, control, error }: BooleanRadioProps) {
+  return (
+    <>
+      <Controller
+        name={name}
+        control={control}
+        render={({ field }) => (
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                className="w-4 h-4 text-blue-600"
+                checked={field.value === true}
+                onChange={() => field.onChange(true)}
+              />
+              <span className="text-sm text-gray-700">Yes</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                className="w-4 h-4 text-blue-600"
+                checked={field.value === false}
+                onChange={() => field.onChange(false)}
+              />
+              <span className="text-sm text-gray-700">No</span>
+            </label>
+          </div>
+        )}
+      />
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    </>
+  )
+}
+
+export default function ExistingCover({ register, errors, watch, control }: Props) {
   const hasExistingCover = watch('hasExistingCover')
 
   return (
@@ -19,30 +60,11 @@ export default function ExistingCover({ register, errors, watch }: Props) {
             Do you currently hold any other life insurance policies?{' '}
             <span className="text-red-500">*</span>
           </label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                {...register('hasExistingCover', {
-                  setValueAs: (v) => v === 'true' || v === true
-                })}
-                type="radio"
-                value="true"
-                className="w-4 h-4 text-blue-600"
-              />
-              <span className="text-sm text-gray-700">Yes</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                {...register('hasExistingCover', {
-                  setValueAs: (v) => v === 'true' || v === true
-                })}
-                type="radio"
-                value="false"
-                className="w-4 h-4 text-blue-600"
-              />
-              <span className="text-sm text-gray-700">No</span>
-            </label>
-          </div>
+          <BooleanRadioGroup
+            name="hasExistingCover"
+            control={control}
+            error={errors.hasExistingCover?.message}
+          />
 
           {hasExistingCover && (
             <div className="mt-4 space-y-4">
