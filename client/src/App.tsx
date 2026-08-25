@@ -1,15 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import PolicySelector from './components/PolicySelector'
 import LifeInsuranceForm from './components/forms/LifeInsuranceForm'
 import UnderwriterPanel from './components/UnderwriterPanel'
 import AllApplicationsPanel from './components/AllApplicationsPanel'
+import ApplicationStatusPage from './components/ApplicationStatusPage'
 import { PolicyType } from './types/insurance'
 
 type Tab = 'apply' | 'underwriter' | 'all'
 
+function getStatusIdFromUrl(): string | null {
+  const match = window.location.pathname.match(/^\/status\/([a-f0-9-]+)$/i)
+  return match ? match[1] : null
+}
+
 export default function App() {
   const [selectedPolicy, setSelectedPolicy] = useState<PolicyType | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('apply')
+  const [statusId, setStatusId] = useState<string | null>(getStatusIdFromUrl)
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setStatusId(getStatusIdFromUrl())
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  if (statusId) {
+    return <ApplicationStatusPage applicationId={statusId} />
+  }
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'apply', label: 'Apply' },
