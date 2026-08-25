@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-import { QualificationDecision } from '../types/insurance'
+import jsPDF from 'jspdf'
+import { QualificationDecision, StoredApplication } from '../types/insurance'
 
 interface ApplicationStatus {
   applicationId: string
@@ -17,28 +18,230 @@ interface Props {
   applicationId: string
 }
 
+const coverTypeLabels: Record<string, string> = {
+  term: 'Term Life',
+  whole: 'Whole of Life',
+  decreasing: 'Decreasing Term'
+}
+
+const smokingLabels: Record<string, string> = {
+  never: 'Never smoked',
+  current: 'Current smoker',
+  ex: 'Ex-smoker'
+}
+
+function generatePDF(status: ApplicationStatus, full: StoredApplication) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const margin = 20
+  const contentWidth = pageWidth - margin * 2
+  let y = 20
+
+  const checkPageBreak = (needed: number = 10) => {
+    if (y + needed > 275) {
+      doc.addPage()
+      y = 20
+    }
+  }
+
+  const drawLine = () => {
+    checkPageBreak(6)
+    doc.setDrawColor(220, 220, 220)
+    doc.line(margin, y, pageWidth - margin, y)
+    y += 6
+  }
+
+  const sectionHeading = (text: string) => {
+    checkPageBreak(12)
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(100, 100, 100)
+    doc.text(text.toUpperCase(), margin, y)
+    y += 6
+  }
+
+  const field = (label: string, value: string) => {
+    checkPageBreak(10)
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(120, 120, 120)
+    doc.text(label, margin, y)
+    doc.setTextColor(30, 30, 30)
+    doc.setFont('helvetica', 'bold')
+    const lines = doc.splitTextToSize(value, contentWidth - 60)
+    doc.text(lines, margin + 65, y)
+    y += lines.length * 5 + 3
+  }
+
+  // Header
+  doc.setFillColor(37, 99, 235)
+  doc.rect(0, 0, pageWidth, 28, 'F')
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(255, 255, 255)
+  doc.text('Insurance Application', margin, 13)
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.text('Application Summary & Decision', margin, 21)
+  y = 38
+
+  // Decision banner
+  const decisionColours: Record<QualificationDecision, [number, number, number]> = {
+    QUALIFY: [220, 252, 231],
+    REFER: [254, 249, 195],
+    DECLINE: [254, 226, 226]
+  }
+  const decisionTextColours: Record<QualificationDecision, [number, number, number]> = {
+    QUALIFY: [22, 101, 52],
+    REFER: [133, 77, 14],
+    DECLINE: [153, 27, 27]
+  }
+  const [br, bg, bb] = decisionColours[status.decision]
+  const [tr, tg, tb] = decisionTextColours[status.decision]
+  doc.setFillColor(br, bg, bb)
+  doc.roundedRect(margin, y, contentWidth, 18, 3, 3, 'F')
+  doc.setFontSize(13)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(tr, tg, tb)
+  doc.text(status.decisionLabel, pageWidth / 2, y + 7, { align: 'center' })
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  if (status.rateLoading) {
+    doc.text(`Rate loading applied: ${status.rateLoading}`, pageWidth / 2, y + 13, { align: 'center' })
+  }
+  y += 26
+
+  // Application details
+  sectionHeading('Application Details')
+  field('Application ID', status.applicationId)
+  field('Applicant', status.applicant)
+  field('Policy Type', `${status.policyType} insurance`)
+  field('Submitted', new Date(status.submittedAt).toLocaleString('en-GB'))
+  field('Decision', status.decisionLabel)
+  drawLine()
+
+  // Personal details
+  const d = full.data
+  sectionHeading('Personal Details')
+  field('First Name', d.firstName)
+  field('Last Name', d.lastName)
+  field('Email', d.email)
+  field('Date of Birth', d.dateOfBirth)
+  field('NI Number', d.nationalInsuranceNumber)
+  field('UK Permanent Resident', d.ukPermanentResident ? 'Yes' : 'No')
+  drawLine()
+
+  // Cover details
+  sectionHeading('Cover Details')
+  field('Cover Type', coverTypeLabels[d.coverType] ?? d.coverType)
+  field('Cover Amount', `£${d.coverAmount.toLocaleString()}`)
+  if (d.coverTermYears) field('Cover Term', `${d.coverTermYears} years`)
+  if (d.linkedLiabilityDescription) field('Linked Liability', d.linkedLiabilityDescription)
+  field('Reason for Cover', d.reasonForCover)
+  drawLine()
+
+  // Medical history
+  sectionHeading('Medical History')
+  field('Pre-existing Conditions', d.hasPreExistingConditions ? 'Yes' : 'No')
+  if (d.preExistingConditionsDetails) field('Conditions Detail', d.preExistingConditionsDetails)
+  field('Prescribed Medication', d.hasMedication ? 'Yes' : 'No')
+  if (d.medicationDetails) field('Medication Detail', d.medicationDetails)
+  field('Surgeries / Hospital Treatment', d.hasSurgeries ? 'Yes' : 'No')
+  if (d.surgeriesDetails) field('Surgery Detail', d.surgeriesDetails)
+  field('Family Medical History', d.hasFamilyHistory ? 'Yes' : 'No')
+  if (d.familyHistoryDetails) field('Family History Detail', d.familyHistoryDetails)
+  drawLine()
+
+  // Lifestyle
+  sectionHeading('Lifestyle')
+  field('Smoking Status', smokingLabels[d.smokingStatus] ?? d.smokingStatus)
+  field('Vaping / Nicotine Use', d.usesVapingOrNicotine ? 'Yes' : 'No')
+  field('Alcohol (units/week)', String(d.alcoholUnitsPerWeek))
+  field('Recreational Drug Use', d.usesRecreationalDrugs ? 'Yes' : 'No')
+  if (d.recreationalDrugsDetails) field('Drug Use Detail', d.recreationalDrugsDetails)
+  drawLine()
+
+  // Occupation & hobbies
+  sectionHeading('Occupation & Hobbies')
+  field('Job Title', d.jobTitle)
+  field('Industry', d.industry)
+  field('Hazardous Hobbies', d.hasHazardousHobbies ? 'Yes' : 'No')
+  if (d.hazardousHobbiesDetails) field('Hobbies Detail', d.hazardousHobbiesDetails)
+  drawLine()
+
+  // Existing cover
+  sectionHeading('Existing Cover')
+  field('Existing Policies', d.hasExistingCover ? 'Yes' : 'No')
+  if (d.existingCoverDetails) field('Existing Cover Detail', d.existingCoverDetails)
+  if (d.existingCoverTotalAmount) field('Total Existing Cover', `£${d.existingCoverTotalAmount.toLocaleString()}`)
+  drawLine()
+
+  // Underwriting notes
+  sectionHeading('Underwriting Notes')
+  status.reasons.forEach((reason) => {
+    checkPageBreak(10)
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(50, 50, 50)
+    const lines = doc.splitTextToSize(`• ${reason}`, contentWidth)
+    doc.text(lines, margin, y)
+    y += lines.length * 5 + 3
+  })
+
+  // Footer on every page
+  const totalPages = (doc.internal as { getNumberOfPages: () => number }).getNumberOfPages()
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i)
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(160, 160, 160)
+    doc.text(
+      `Generated ${new Date().toLocaleString('en-GB')} — Page ${i} of ${totalPages}`,
+      pageWidth / 2,
+      290,
+      { align: 'center' }
+    )
+  }
+
+  doc.save(`application-${status.applicationId}.pdf`)
+}
+
 export default function ApplicationStatusPage({ applicationId }: Props) {
   const [status, setStatus] = useState<ApplicationStatus | null>(null)
+  const [fullApplication, setFullApplication] = useState<StoredApplication | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
   useEffect(() => {
-    const fetchStatus = async () => {
+    const fetchData = async () => {
       setIsLoading(true)
       setError(null)
       try {
-        const response = await axios.get<ApplicationStatus>(
-          `/api/applications/${applicationId}/status`
-        )
-        setStatus(response.data)
+        const [statusResponse, fullResponse] = await Promise.all([
+          axios.get<ApplicationStatus>(`/api/applications/${applicationId}/status`),
+          axios.get<StoredApplication>(`/api/applications/${applicationId}`)
+        ])
+        setStatus(statusResponse.data)
+        setFullApplication(fullResponse.data)
       } catch {
         setError('We could not find an application with that ID. Please check the link and try again.')
       } finally {
         setIsLoading(false)
       }
     }
-    fetchStatus()
+    fetchData()
   }, [applicationId])
+
+  const handleDownloadPDF = () => {
+    if (!status || !fullApplication) return
+    setIsGeneratingPDF(true)
+    try {
+      generatePDF(status, fullApplication)
+    } finally {
+      setIsGeneratingPDF(false)
+    }
+  }
 
   const decisionConfig: Record<
     QualificationDecision,
@@ -91,7 +294,7 @@ export default function ApplicationStatusPage({ applicationId }: Props) {
           </div>
         )}
 
-        {status && (
+        {status && fullApplication && (
           <div className="bg-white rounded-lg shadow p-8 space-y-6">
             <div className="text-center">
               <div className={`text-5xl mb-4 ${decisionConfig[status.decision].iconColour}`}>
@@ -151,6 +354,16 @@ export default function ApplicationStatusPage({ applicationId }: Props) {
                   </li>
                 ))}
               </ul>
+            </div>
+
+            <div className="border-t pt-4 flex justify-end">
+              <button
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors flex items-center gap-2"
+              >
+                {isGeneratingPDF ? 'Generating...' : '⬇ Download PDF'}
+              </button>
             </div>
           </div>
         )}
